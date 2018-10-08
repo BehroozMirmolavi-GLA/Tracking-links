@@ -17,6 +17,7 @@ server <- function(input, output, session) {
     sapply(names(GetTableMetadata()$fields), function(x) input[[x]])
   })
   
+  # if inputs aren't filled in then don't allow a submit
   observe({
     if(
       is.null(input$url) | input$url == "" |
@@ -33,7 +34,7 @@ server <- function(input, output, session) {
   
 
   
-  # Click "Submit" button -> save data
+  # Click "Submit" button -> save data and add row to google sheet
   observeEvent(input$submit, {
     
       CreateData(formData())
@@ -76,10 +77,7 @@ server <- function(input, output, session) {
   
 
   
-
-
-  
-  # display table
+  # display table using DT
   output$responses <- DT::renderDataTable({
     #update after submit is clicked
     input$submit
@@ -91,6 +89,7 @@ server <- function(input, output, session) {
                    ,colReorder = TRUE), rownames= FALSE, filter = 'top', escape = FALSE
   )     
   
+  #provide an option for the user to download all tracking links
   output$downloadData <- downloadHandler(
     
     filename = "Tracking Links.csv",

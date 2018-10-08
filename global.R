@@ -73,7 +73,7 @@ UpdateData <- function(data) {
   
 }
 
-
+#Delete is no longer needed
 
 
 # Cast from Inputs to a one-row data.frame
@@ -94,6 +94,7 @@ CastData <- function(data) {
   return (datar)
 }
 
+#we need a separate function for when the short link is built via API than the more generic empty row function
 CastData2 <- function(data) {
   madelink <- paste0(
     data["url"]
@@ -179,7 +180,7 @@ CreateDefaultRecord <- function() {
   return (mydefault)
 }
 
-# Fill the input fields with the values of the selected record in the table
+# Fill the input fields with the values of the selected record in the table - this is obsolete now
 UpdateInputs <- function(data, session) {
   updateTextInput(session, "date", value = unname(data["date"]))
   updateTextInput(session, "email", value = unname(data["email"]))
@@ -195,6 +196,7 @@ UpdateInputs <- function(data, session) {
   updateTextInput(session, "longurl", value = unname(data["longurl"]))
 }
 
+#give the user pre-filled options for source and medium based on our admin system
 choices <- data.frame(
   sourcechoice = c(
     'Facebook',
@@ -244,6 +246,7 @@ choices <- data.frame(
   )
 )
 
+#define a function that makes links available in datatable via html
 createLink <- function(a) {
   paste0('<a href="',as.character(a),'" target="_blank" class="btn btn-primary">','Link</a>')
 }

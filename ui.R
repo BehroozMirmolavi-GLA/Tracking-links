@@ -1,7 +1,6 @@
 ui <- dashboardPage(
 
 
-  
   #header
   dashboardHeader(title = "Tracking Links"),
   
