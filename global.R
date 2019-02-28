@@ -18,7 +18,6 @@ service_token <-
 # drive_download(test, path = "test.csv", type = "csv",overwrite = TRUE)
 # responses <- read.csv("test.csv", row.names = T)
 
-test <- gs_key("")
 test2 <- as.data.frame(gs_read_csv(test))
 responses <- test2
 rm(test2)
@@ -46,21 +45,28 @@ GetTableMetadata <- function() {
 
 #C
 CreateData <- function(data) {
+  data2 <- CastData2(data)
   
-  data <- CastData2(data)
+  responses <<- rbind(responses, data2)
   
-  responses <<- rbind(responses, data)
-
 }
 
 #R
 ReadData <- function() {
   if (exists("responses")) {
-    responses
+    responses %>%
+      mutate(
+        source = factor(source)
+        ,
+        medium = factor(medium)
+        ,
+        campaign = factor(campaign)
+      )
   } else
   {
     Sys.sleep(0.1)
-    responses
+    responses %>%
+      mutate(source = factor(source))
   }
 }
 
@@ -68,12 +74,11 @@ ReadData <- function() {
 
 #U
 UpdateData <- function(data) {
-  
   datar <- CastData2(data)
   
 }
 
-#Delete is no longer needed
+
 
 
 # Cast from Inputs to a one-row data.frame
@@ -94,48 +99,66 @@ CastData <- function(data) {
   return (datar)
 }
 
-#we need a separate function for when the short link is built via API than the more generic empty row function
 CastData2 <- function(data) {
-  madelink <- paste0(
-    data["url"]
-    ,
-    "/?utm_source=",
-    data["source"]
-    ,
-    "&utm_medium=",
-    data["medium"]
-    ,
-    "&utm_campaign=",
-    data["campaign"]
-    ,
-    "&utm_content=",
-    data["content"]
-  )
-
-  shortlink <- if (grepl("london.gov.uk", madelink)) {
-  
-  a <-  POST(
-      'https://firebasedynamiclinks.googleapis.com/v1/shortLinks?',
-      add_headers(
-        "Content-Type" = "application/json",
-        "Authorization" = paste("Bearer", service_token$credentials$access_token)
+  madelink <-
+    gsub(
+      " ",
+      "",
+      paste0(
+        data["url"]
+        ,
+        "/?utm_source=",
+        data["source"]
+        ,
+        "&utm_medium=",
+        data["medium"]
+        ,
+        "&utm_campaign=",
+        data["campaign"]
+        ,
+        "&utm_content=",
+        data["content"]
       ),
-      body = jsonlite:::toJSON(
-        list(
-          dynamicLinkInfo = list(dynamicLinkDomain = "londongov.page.link",
-                                 link = madelink),
-          suffix = list(option = "SHORT")
-        ),
-        pretty = T,
-        auto_unbox = T
+      fixed = T
+    )
+  
+  shortlink <- if (grepl("london.gov.uk", madelink)) {
+    a <- GET(
+      paste0(
+        'https://api-ssl.bitly.com/v3/shorten?access_token=2c614489ecf9895ef1bb383c70c23324f0972fed&longURL='
+        ,
+        URLencode(madelink, reserved = T)
       )
     )
-
-   as.character(httr:::content(a)$`shortLink`)
-   } else {
-   ""
+    
+    # a <-
+    #   POST(
+    #     'https://firebasedynamiclinks.googleapis.com/v1/shortLinks?',
+    #     add_headers(
+    #       "Content-Type" = "application/json",
+    #       "Authorization" = paste("Bearer", service_token$credentials$access_token)
+    #     ),
+    #     body = jsonlite:::toJSON(
+    #       list(
+    #         dynamicLinkInfo = list(dynamicLinkDomain = "londongov.page.link",
+    #                                link = madelink),
+    #         suffix = list(option = "SHORT")
+    #       ),
+    #       pretty = T,
+    #       auto_unbox = T
+    #     )
+    #   )
+    if (length(as.character(httr:::content(a)$data$url)) == 0) {
+      "Invalid URL for bit.ly"
+    } else{
+      as.character(httr:::content(a)$data$url)
     }
-
+    
+    
+  } else {
+    ""
+  }
+  
   
   datar <- data.frame(
     date = format(Sys.Date(), "%Y-%m-%d"),
@@ -143,8 +166,8 @@ CastData2 <- function(data) {
     url = data["url"],
     source = data["source"],
     medium = data["medium"],
-    campaign = data["campaign"],
-    content = data["content"],
+    campaign = gsub(" ", "", data["campaign"], fixed = T),
+    content = gsub(" ", "", data["content"], fixed = T),
     shorturl = shortlink,
     longurl = madelink,
     stringsAsFactors = FALSE
@@ -180,15 +203,15 @@ CreateDefaultRecord <- function() {
   return (mydefault)
 }
 
-# Fill the input fields with the values of the selected record in the table - this is obsolete now
+# Fill the input fields with the values of the selected record in the table
 UpdateInputs <- function(data, session) {
   updateTextInput(session, "date", value = unname(data["date"]))
   updateTextInput(session, "email", value = unname(data["email"]))
   updateTextInput(session, "url", value = unname(data["url"]))
-  updateSelectInput(session,
-                    "source",
-                    label = unname(data["source"]),
-                    selected = unname(data["source"]))
+  updateSelectizeInput(session,
+                       "source",
+                       label = unname(data["source"]),
+                       selected = unname(data["source"]))
   updateTextInput(session, "medium", value = unname(data["medium"]))
   updateTextInput(session, "campaign", value = unname(data["campaign"]))
   updateTextInput(session, "content", value = unname(data["content"]))
@@ -196,7 +219,6 @@ UpdateInputs <- function(data, session) {
   updateTextInput(session, "longurl", value = unname(data["longurl"]))
 }
 
-#give the user pre-filled options for source and medium based on our admin system
 choices <- data.frame(
   sourcechoice = c(
     'Facebook',
@@ -205,9 +227,6 @@ choices <- data.frame(
     'Facebook',
     'Facebook',
     'Facebook',
-    'twitter',
-    'twitter',
-    'twitter',
     'twitter',
     'twitter',
     'instagram',
@@ -219,7 +238,9 @@ choices <- data.frame(
     'search',
     'display',
     'display',
-    'display'
+    'display',
+    'LinkedIn',
+    'LinkedIn'
   ),
   mediumchoice = c(
     'post',
@@ -229,10 +250,7 @@ choices <- data.frame(
     'video-ad',
     'carousel-ad',
     'post',
-    'photo',
-    'video',
-    'link-ad',
-    'video-ad',
+    'ad',
     'story',
     'profile',
     'newsletter',
@@ -242,11 +260,17 @@ choices <- data.frame(
     'ppc',
     'banner',
     'text',
-    'image'
+    'image',
+    'post',
+    'link-ad'
   )
 )
 
-#define a function that makes links available in datatable via html
 createLink <- function(a) {
-  paste0('<a href="',as.character(a),'" target="_blank" class="btn btn-primary">','Link</a>')
+  paste0(
+    '<a href="',
+    as.character(a),
+    '" target="_blank" class="btn btn-primary">',
+    'Link</a>'
+  )
 }

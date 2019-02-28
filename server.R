@@ -1,5 +1,5 @@
 server <- function(input, output, session) {
-  
+  hide("submit3")
   
   #observe source changes
   #subTable
@@ -7,67 +7,79 @@ server <- function(input, output, session) {
     subset(choices, grepl(input$source, choices$sourcechoice))
   })
   
-  output$mediumUI <- renderUI({ 
-    selectInput("medium", "Medium", searchResult()[,2])
+  output$mediumUI <- renderUI({
+    selectizeInput("medium",
+                   "Medium",
+                   c("", as.character(searchResult()[, 2])),
+                   options = list(create = TRUE))
   })
   
   
   # input fields are treated as a group
   formData <- reactive({
-    sapply(names(GetTableMetadata()$fields), function(x) input[[x]])
+    sapply(names(GetTableMetadata()$fields), function(x)
+      input[[x]])
   })
   
-  # if inputs aren't filled in then don't allow a submit
   observe({
-    if(
-      is.null(input$url) | input$url == "" |
-      is.null(input$source) | input$source == "" |
-      is.null(input$campaign) | input$campaign == "" |
-      is.null(input$content) | input$content == ""
-    ){
-      disable("submit")
+    if (is.null(input$url) | input$url == "" |
+        is.null(input$source) | input$source == "" |
+        is.null(input$campaign) | input$campaign == "" |
+        is.null(input$content) | input$content == "") {
+      hide("submit")
+      show("submit2")
     }
     else{
-      enable("submit")
+      show("submit")
+      hide("submit2")
     }
   })
   
-
   
-  # Click "Submit" button -> save data and add row to google sheet
+  
+  # Click "Submit" button -> save data
   observeEvent(input$submit, {
+    hide("submit")
+    show("submit3")
     
-      CreateData(formData())
-      
-      Sys.sleep(0.05)
-
-      gs_add_row(test
-                 , input = 
-                   tail(ReadData(),1)
-                   
-      )
-      
-
-
-	
-	showModal(
-	  modalDialog(
+    CreateData(formData())
+    
+    Sys.sleep(0.05)
+    
+    gs_add_row(test
+               , input =
+                 tail(ReadData(), 1))
+    
+    
+    
+    
+    showModal(
+      modalDialog(
         title = "Here is your tracking link",
         
-        div(id='newurl'
-            , a(tail(ReadData(),1)[,9]
-                , href = tail(ReadData(),1)[,9]
-            , target="_blank")),
+        HTML(
+          '<input type="text" id="newurlshort" value="',
+          tail(ReadData(), 1)[, 8],
+          '">'
+        ),
+        HTML('<button onclick="onclickcopy()">Copy link</button>'),
         br(),
-        div(id='newurl'
-            , a(tail(ReadData(),1)[,8]
-                , href = tail(ReadData(),1)[,8]
-                , target="_blank")),
-
+        HTML(
+          '<input type="text" id="newurllong" value="',
+          tail(ReadData(), 1)[, 9],
+          '">'
+        ),
+        HTML('<button onclick="onclickcopy2()">Copy link</button>'),
+        
         easyClose = TRUE,
         footer = NULL
-      ),session)
-	
+      ),
+      session
+    )
+    
+    show("submit")
+    hide("submit3")
+    
   }, priority = 1)
   
   # Press "New" button -> display empty record
@@ -75,28 +87,49 @@ server <- function(input, output, session) {
     UpdateInputs(CreateDefaultRecord(), session)
   })
   
-
   
-  # display table using DT
+  
+  
+  
+  
+  # display table
   output$responses <- DT::renderDataTable({
     #update after submit is clicked
     input$submit
-    ReadData() %>% mutate(shorturl = createLink(shorturl),longurl = createLink(longurl))
-  }, server = FALSE, selection = "single", extensions = c('Scroller','ColReorder','Buttons'),
+    ReadData() %>% mutate(shorturl = createLink(shorturl),
+                          longurl = createLink(longurl))
+  }, server = FALSE, selection = "single", extensions = c('Scroller', 'ColReorder', 'Buttons'),
   colnames = unname(GetTableMetadata()$fields)
-  , options = list(dom = 'tp'
-                   ,scrollT = TRUE
-                   ,colReorder = TRUE), rownames= FALSE, filter = 'top', escape = FALSE
-  )     
+  , options = list(
+    dom = 'tp'
+    ,
+    columnDefs = list(list(
+      targets = c(7, 8), searchable = FALSE
+    ))
+    ,
+    autoWidth = TRUE
+    ,
+    scrollT = TRUE
+    ,
+    colReorder = TRUE
+  )
+  , rownames = FALSE, filter = 'top', escape = FALSE)
   
-  #provide an option for the user to download all tracking links
   output$downloadData <- downloadHandler(
-    
     filename = "Tracking Links.csv",
     content = function(file) {
-      write.csv(ReadData(), file, row.names = F)
+      write.csv(ReadData()[input[["responses_rows_all"]],], file, row.names = F)
     }
     
   )
-   
+  
+  observeEvent(input$browser, {
+    browser()
+  }) #$('#browser').show();
+  
+  
+  session$onSessionEnded(function() {
+    stopApp()
+  })
+  
 }
