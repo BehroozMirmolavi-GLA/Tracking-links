@@ -123,10 +123,15 @@ server <- function(input, output, session) {
     
   )
   
+#use to show r in browser
   observeEvent(input$browser, {
-    browser()
+    
   }) #$('#browser').show();
-  
+
+
+  observeEvent(input$timeout, {
+    stopApp()
+  })
   
   session$onSessionEnded(function() {
     stopApp()

@@ -28,31 +28,36 @@ ui <- dashboardPage(
         fluidRow(
           # column(width = 1,
           # shinyjs::disabled(textInput("date", "Date", "0"))),
-          column(width = 1,
+          column(width = 4,
                  textInput("email", "Email", "")),
-          column(width = 1,
+          column(width = 4,
                  textInput("url", "URL", "")),
           column(
-            width = 1,
+            width = 4,
             selectInput(
               "source",
               "Source",
               c(
-                "Facebook" = "Facebook",
+                "facebook" = "facebook",
                 "twitter" = "twitter",
                 "instagram" = "instagram",
                 "email" = "email",
                 "search" = "search",
-                "display" = "display"
+                "display" = "display",
+                "LinkedIn" = "LinkedIn",
+                "Snapchat" = "Snapchat",
+                "Website" = "Website"
+
               ),
               selected = "twitter"
             )
-          ),
-          column(width = 1,
+          )),
+        fluidRow(
+          column(width = 4,
                  htmlOutput("mediumUI")),
-          column(width = 1,
+          column(width = 4,
                  textInput("campaign", "Campaign", "")),
-          column(width = 1,
+          column(width = 4,
                  textInput("content", "Content", ""))#,
           #column(width = 1,
           #shinyjs::disabled(textInput("shorturl", "shortURL", "0"))),
@@ -62,7 +67,7 @@ ui <- dashboardPage(
         
         #action buttons
         fluidRow(column(
-          width = 1,
+          width = 6,
           actionButton("submit", "Submit"),
           actionButton("submit2", "Please fill the inputs"),
           actionButton("submit3", "Please wait for your new link")

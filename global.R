@@ -13,11 +13,12 @@ library(DT)
 options(googleAuthR.scopes.selected = "https://www.googleapis.com/auth/firebase")
 service_token <-
   gar_auth_service(json_file = "my-project-1531324857394-firebase-adminsdk-f4jhu-819f25b2a5.json")
-
+gs_auth(token = "token.rds")
 # test <- drive_find("test.csv")
 # drive_download(test, path = "test.csv", type = "csv",overwrite = TRUE)
 # responses <- read.csv("test.csv", row.names = T)
 
+test <- gs_key("1Dt3OkkZUiutTXxjPWI00uNiNX0A57sXIVw-vS9PW0g0")
 test2 <- as.data.frame(gs_read_csv(test))
 responses <- test2
 rm(test2)
@@ -107,7 +108,7 @@ CastData2 <- function(data) {
       paste0(
         data["url"]
         ,
-        "/?utm_source=",
+        "?utm_source=",
         data["source"]
         ,
         "&utm_medium=",
@@ -122,7 +123,7 @@ CastData2 <- function(data) {
       fixed = T
     )
   
-  shortlink <- if (grepl("london.gov.uk", madelink)) {
+  shortlink <- if (grepl("", madelink)) {
     a <- GET(
       paste0(
         'https://api-ssl.bitly.com/v3/shorten?access_token=2c614489ecf9895ef1bb383c70c23324f0972fed&longURL='
@@ -221,12 +222,12 @@ UpdateInputs <- function(data, session) {
 
 choices <- data.frame(
   sourcechoice = c(
-    'Facebook',
-    'Facebook',
-    'Facebook',
-    'Facebook',
-    'Facebook',
-    'Facebook',
+    'facebook',
+    'facebook',
+    'facebook',
+    'facebook',
+    'facebook',
+    'facebook',
     'twitter',
     'twitter',
     'instagram',
@@ -240,7 +241,9 @@ choices <- data.frame(
     'display',
     'display',
     'LinkedIn',
-    'LinkedIn'
+    'LinkedIn',
+    'Snapchat',
+    'Website'
   ),
   mediumchoice = c(
     'post',
@@ -262,7 +265,9 @@ choices <- data.frame(
     'text',
     'image',
     'post',
-    'link-ad'
+    'link-ad',
+    'Snapchat'
+    ,'Referral'
   )
 )
 
