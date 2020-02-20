@@ -108,17 +108,23 @@ CastData2 <- function(data) {
       paste0(
         data["url"]
         ,
-        "?utm_source=",
-        data["source"]
+        if (grepl("\\?",madelink)) {
+          
+        } else {
+        "?"
+        }
+        ,
+        "utm_source=",
+        str_replace_all(data["source"], "[^[:alnum:]]", "")
         ,
         "&utm_medium=",
-        data["medium"]
+        str_replace_all(data["medium"], "[^[:alnum:]]", "")
         ,
         "&utm_campaign=",
-        data["campaign"]
+        str_replace_all(data["campaign"], "[^[:alnum:]]", "")
         ,
         "&utm_content=",
-        data["content"]
+        str_replace_all(data["content"], "[^[:alnum:]]", "")
       ),
       fixed = T
     )

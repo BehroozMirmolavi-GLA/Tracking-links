@@ -96,7 +96,8 @@ server <- function(input, output, session) {
   output$responses <- DT::renderDataTable({
     #update after submit is clicked
     input$submit
-    ReadData() %>% mutate(shorturl = createLink(shorturl),
+    ReadData() %>% mutate(url = createLink(url),
+                          shorturl = createLink(shorturl),
                           longurl = createLink(longurl))
   }, server = FALSE, selection = "single", extensions = c('Scroller', 'ColReorder', 'Buttons'),
   colnames = unname(GetTableMetadata()$fields)
