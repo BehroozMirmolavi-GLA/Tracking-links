@@ -10,14 +10,10 @@ library(shinycssloaders)
 library(tidyverse)
 library(DT)
 
-options(googleAuthR.scopes.selected = "https://www.googleapis.com/auth/firebase")
-service_token <-
-  gar_auth_service(json_file = "my-project-1531324857394-firebase-adminsdk-f4jhu-819f25b2a5.json")
-gs_auth(token = "token.rds")
-# test <- drive_find("test.csv")
-# drive_download(test, path = "test.csv", type = "csv",overwrite = TRUE)
-# responses <- read.csv("test.csv", row.names = T)
+#t <- sheets_auth()
+#saveRDS(t, "token.rds")
 
+gs_auth(token = "token.rds")
 test <- gs_key("1Dt3OkkZUiutTXxjPWI00uNiNX0A57sXIVw-vS9PW0g0")
 test2 <- as.data.frame(gs_read_csv(test))
 responses <- test2
@@ -101,18 +97,16 @@ CastData <- function(data) {
 }
 
 CastData2 <- function(data) {
+  string <- as.character(data["url"])
   madelink <-
     gsub(
       " ",
       "",
-      paste0(
-        data["url"]
+        if (grepl("\\?",string)) {
+        paste0(
+        gsub("\\?","",str_extract(string,".*\\?"))
         ,
-        if (grepl("\\?",madelink)) {
-          
-        } else {
-        "?"
-        }
+        "?"  
         ,
         "utm_source=",
         str_replace_all(data["source"], "[^[:alnum:]]", "")
@@ -125,7 +119,30 @@ CastData2 <- function(data) {
         ,
         "&utm_content=",
         str_replace_all(data["content"], "[^[:alnum:]]", "")
-      ),
+        ,
+        "&"
+        ,
+        gsub("\\?","",str_extract(string,"\\?.*"))
+        )
+        } else {
+        paste0(
+        string
+        ,
+        "?"
+        ,
+        "utm_source=",
+        str_replace_all(data["source"], "[^[:alnum:]]", "")
+        ,
+        "&utm_medium=",
+        str_replace_all(data["medium"], "[^[:alnum:]]", "")
+        ,
+        "&utm_campaign=",
+        str_replace_all(data["campaign"], "[^[:alnum:]]", "")
+        ,
+        "&utm_content=",
+        str_replace_all(data["content"], "[^[:alnum:]]", "")  
+        ) 
+        },
       fixed = T
     )
   
@@ -138,23 +155,6 @@ CastData2 <- function(data) {
       )
     )
     
-    # a <-
-    #   POST(
-    #     'https://firebasedynamiclinks.googleapis.com/v1/shortLinks?',
-    #     add_headers(
-    #       "Content-Type" = "application/json",
-    #       "Authorization" = paste("Bearer", service_token$credentials$access_token)
-    #     ),
-    #     body = jsonlite:::toJSON(
-    #       list(
-    #         dynamicLinkInfo = list(dynamicLinkDomain = "londongov.page.link",
-    #                                link = madelink),
-    #         suffix = list(option = "SHORT")
-    #       ),
-    #       pretty = T,
-    #       auto_unbox = T
-    #     )
-    #   )
     if (length(as.character(httr:::content(a)$data$url)) == 0) {
       "Invalid URL for bit.ly"
     } else{

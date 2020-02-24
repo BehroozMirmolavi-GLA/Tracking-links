@@ -93,13 +93,14 @@ server <- function(input, output, session) {
   
   
   # display table
-  output$responses <- DT::renderDataTable({
+  output$responses <- DT::renderDataTable(
+    {
     #update after submit is clicked
     input$submit
-    ReadData() %>% mutate(url = createLink(url),
+    ReadData() %>% mutate(
                           shorturl = createLink(shorturl),
                           longurl = createLink(longurl))
-  }, server = FALSE, selection = "single", extensions = c('Scroller', 'ColReorder', 'Buttons'),
+  }, server = FALSE, selection = "single", extensions = c('Responsive','Scroller', 'ColReorder', 'Buttons'),
   colnames = unname(GetTableMetadata()$fields)
   , options = list(
     dom = 'tp'
@@ -114,7 +115,8 @@ server <- function(input, output, session) {
     ,
     colReorder = TRUE
   )
-  , rownames = FALSE, filter = 'top', escape = FALSE)
+  , rownames = FALSE, filter = 'top', escape = FALSE,
+  callback = JS('table.page("last").draw(false);'))
   
   output$downloadData <- downloadHandler(
     filename = "Tracking Links.csv",
