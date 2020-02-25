@@ -9,6 +9,7 @@ library(jsonlite)
 library(shinycssloaders)
 library(tidyverse)
 library(DT)
+library(jsonlite)
 
 #t <- sheets_auth()
 #saveRDS(t, "token.rds")
@@ -147,18 +148,22 @@ CastData2 <- function(data) {
     )
   
   shortlink <- if (grepl("", madelink)) {
-    a <- GET(
-      paste0(
-        'https://api-ssl.bitly.com/v3/shorten?access_token=2c614489ecf9895ef1bb383c70c23324f0972fed&longURL='
-        ,
-        URLencode(madelink, reserved = T)
+    a <- POST(
+      url = 'https://api-ssl.bitly.com/v4/shorten'
+      ,add_headers('Authorization' = 'Bearer 2c614489ecf9895ef1bb383c70c23324f0972fed'
+                   ,'Content-Type' = 'application/json')
+      ,body = jsonlite:::toJSON(
+        list(
+          long_url = madelink
+        ),
+        auto_unbox = T
       )
     )
     
-    if (length(as.character(httr:::content(a)$data$url)) == 0) {
+    if (length(as.character(httr:::content(a)$link)) == 0) {
       "Invalid URL for bit.ly"
     } else{
-      as.character(httr:::content(a)$data$url)
+      as.character(httr:::content(a)$link)
     }
     
     
